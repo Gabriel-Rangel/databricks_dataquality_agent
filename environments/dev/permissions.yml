@@ -7,5 +7,3 @@ targets:
       # Current user deploying the bundle gets full access
       - user_name: ${workspace.current_user.userName}
         level: CAN_MANAGE
-      - user_name: flavio.rodrigues@databricks.com
-        level: CAN_MANAGE

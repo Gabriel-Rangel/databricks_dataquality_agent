@@ -36,6 +36,7 @@ wheels/
 .pydevproject
 .settings/
 .cursor/
+
 CLAUDE.md   # Claude prompt for the project
 
 # OS

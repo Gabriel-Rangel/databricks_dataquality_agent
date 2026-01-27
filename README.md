@@ -25,20 +25,71 @@ A Databricks App for generating, validating, and managing data quality rules usi
 
 ## Quick Start
 
+### Prerequisites
+
+Before deploying, you need to set up the following:
+
+1. **Databricks CLI** - Install and configure the CLI:
+   - [Installation Guide](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/cli/install)
+   - Authenticate: `databricks auth login --host https://your-workspace.cloud.databricks.com`
+
+2. **SQL Warehouse** - Get your warehouse ID:
+   ```bash
+   databricks warehouses list --output json | jq '.[].id'
+   ```
+
+3. **Lakebase (PostgreSQL)** - Create a Lakebase instance in your workspace:
+   - Go to Databricks workspace → Catalog → Lakebase
+   - Create a new PostgreSQL instance
+   - Note the host URL (e.g., `instance-xxxxx.database.azuredatabricks.net`)
+
+### Option 1: CI/CD Deployment (Recommended)
+
+The CI/CD pipeline automatically configures job IDs and environment variables. Set up GitHub Actions with the required secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `DATABRICKS_HOST` | Workspace URL |
+| `DATABRICKS_CLIENT_ID` | Service Principal Client ID |
+| `SQL_WAREHOUSE_ID` | SQL Warehouse ID |
+| `LAKEBASE_HOST` | Lakebase PostgreSQL host |
+| `LAKEBASE_DATABASE` | Lakebase database name |
+
+Push to `main` branch to trigger automatic deployment to dev environment.
+
+> **Note:** The CI/CD pipeline handles the two-pass deployment: first creates jobs, then regenerates `src/app.yaml` with job IDs and redeploys.
+
+### Option 2: Local Deployment (Manual Configuration)
+
+For local deployment, you must manually configure job IDs after the first deployment:
+
 ```bash
 # 1. Clone and configure
 git clone https://github.com/dediggibyte/databricks_dqx_agent.git
 cd databricks_dqx_agent
 export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
 
-# 2. Deploy
-databricks bundle validate -t dev
-databricks bundle deploy -t dev
+# 2. First deployment (creates jobs)
+databricks bundle validate -t dev --var sql_warehouse_id=<your-warehouse-id>
+databricks bundle deploy -t dev --var sql_warehouse_id=<your-warehouse-id>
+
+# 3. Get the job IDs created by the bundle
+databricks bundle summary -t dev --var sql_warehouse_id=<your-warehouse-id> --output json | jq '.resources.jobs | to_entries[] | {name: .key, id: .value.id}'
+
+# 4. Update src/app.yaml with:
+#    - SQL_WAREHOUSE_ID: Your SQL Warehouse ID
+#    - DQ_GENERATION_JOB_ID: Job ID from step 3
+#    - DQ_VALIDATION_JOB_ID: Job ID from step 3
+#    - LAKEBASE_HOST: Your Lakebase PostgreSQL host
+#    - LAKEBASE_DATABASE: Your Lakebase database name
+
+# 5. Redeploy with updated configuration
+databricks bundle deploy -t dev --var sql_warehouse_id=<your-warehouse-id>
 ```
 
 Access: `https://your-workspace.cloud.databricks.com/apps/dqx-rule-generator-dev`
 
-> **Note:** DAB automatically deploys notebooks and configures permissions. No manual setup required.
+> **Note:** Unlike CI/CD deployment, local deployment requires manual configuration of `src/app.yaml` with job IDs after the first deployment.
 
 ---
 
@@ -81,17 +132,18 @@ databricks_dqx_agent/
 
 Set in `src/app.yaml`:
 
-| Variable | Description |
-|----------|-------------|
-| `SQL_WAREHOUSE_ID` | SQL Warehouse ID for queries |
-| `DQ_GENERATION_JOB_ID` | Auto-set by DAB |
-| `DQ_VALIDATION_JOB_ID` | Auto-set by DAB |
+| Variable | Description | How to set |
+|----------|-------------|------------|
+| `SQL_WAREHOUSE_ID` | SQL Warehouse ID for queries | Manual |
+| `DQ_GENERATION_JOB_ID` | Job ID for rule generation | Auto (CI/CD) or Manual (local) |
+| `DQ_VALIDATION_JOB_ID` | Job ID for rule validation | Auto (CI/CD) or Manual (local) |
+| `LAKEBASE_HOST` | Lakebase PostgreSQL host | Manual |
+| `LAKEBASE_DATABASE` | Lakebase database name | Manual |
 
 ### Optional
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `LAKEBASE_HOST` | Lakebase PostgreSQL host | - |
 | `MODEL_SERVING_ENDPOINT` | AI model endpoint | `databricks-claude-sonnet-4-5` |
 
 ---
@@ -143,6 +195,12 @@ python wsgi.py
 - [Databricks DQX Documentation](https://databrickslabs.github.io/dqx/)
 - [Databricks Apps Guide](https://docs.databricks.com/dev-tools/databricks-apps/index.html)
 - [Databricks Asset Bundles](https://docs.databricks.com/aws/en/dev-tools/bundles/)
+
+---
+
+## Acknowledgements
+
+This repository is based on the original project created by [Nivethan Venkatachalam](https://github.com/dediggibyte/databricks_dqx_agent).
 
 ---
 

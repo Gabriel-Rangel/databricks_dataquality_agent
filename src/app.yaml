@@ -2,20 +2,28 @@
 # ============================
 # Runtime configuration for the Flask app
 #
-# SETUP INSTRUCTIONS:
-# 1. Set SQL_WAREHOUSE_ID to your SQL Warehouse ID
-#    Get it: databricks warehouses list --output json | jq '.[].id'
+# NOTE: For CI/CD deployments, this file is automatically regenerated with
+# job IDs and secrets. For local deployment, follow the manual setup below.
 #
-# 2. Deploy the bundle first: databricks bundle deploy -t dev
+# MANUAL SETUP (Local Deployment):
+# ================================
+# 1. Get your SQL Warehouse ID:
+#    databricks warehouses list --output json | jq '.[].id'
 #
-# 3. Get the job IDs created by the bundle:
-#    databricks jobs list --output json | jq '.[] | select(.settings.name | contains("DQ Rule")) | {name: .settings.name, id: .job_id}'
+# 2. Create a Lakebase (PostgreSQL) instance in your workspace:
+#    Databricks workspace -> Catalog -> Lakebase -> Create
 #
-# 4. Update DQ_GENERATION_JOB_ID and DQ_VALIDATION_JOB_ID below
+# 3. First deployment (creates jobs):
+#    databricks bundle deploy -t dev --var sql_warehouse_id=<your-warehouse-id>
 #
-# 5. Redeploy: databricks bundle deploy -t dev
+# 4. Get the job IDs created by the bundle:
+#    databricks bundle summary -t dev --var sql_warehouse_id=<your-warehouse-id> --output json | \
+#      jq '.resources.jobs | to_entries[] | {name: .key, id: .value.id}'
 #
-# 6. Redeploy: databricks bundle run -t dev
+# 5. Update the values below with your configuration
+#
+# 6. Redeploy with updated configuration:
+#    databricks bundle deploy -t dev --var sql_warehouse_id=<your-warehouse-id>
 
 command:
   - gunicorn
@@ -28,23 +36,32 @@ command:
   - wsgi:app
 
 env:
-  # === REQUIRED: Set your SQL Warehouse ID ===
+  # === REQUIRED: SQL Warehouse ID ===
+  # Get it: databricks warehouses list --output json | jq '.[].id'
   - name: SQL_WAREHOUSE_ID
-    value: "148ccb90800933a1"
+    value: ""
 
-  # === REQUIRED: Set after first deployment (see instructions above) ===
+  # === REQUIRED: Job IDs (set after first deployment) ===
+  # These are created by DAB on first deployment. Get them with:
+  # databricks bundle summary -t dev --output json | jq '.resources.jobs'
   - name: DQ_GENERATION_JOB_ID
-    value: "33189798259299"
+    value: ""
 
   - name: DQ_VALIDATION_JOB_ID
-    value: "552888835514296"
+    value: ""
 
-  # === LAKEBASE: PostgreSQL for storing DQ rules ===
+  # === REQUIRED: Lakebase PostgreSQL Configuration ===
+  # Create a Lakebase instance in your workspace first
   - name: LAKEBASE_HOST
-    value: "instance-91ec4609-d6b6-4ee3-bfce-553b5ca033db.database.azuredatabricks.net"
+    value: ""
 
   - name: LAKEBASE_DATABASE
     value: "databricks_postgres"
 
   - name: LAKEBASE_PORT
     value: "5432"
+
+  # === OPTIONAL: Model Serving Endpoint ===
+  # Default: databricks-claude-sonnet-4-5
+  # - name: MODEL_SERVING_ENDPOINT
+  #   value: "databricks-claude-sonnet-4-5"
