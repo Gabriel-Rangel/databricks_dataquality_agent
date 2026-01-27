@@ -1,0 +1,49 @@
+# DQ Rule Generation Job Definition (Serverless)
+
+resources:
+  jobs:
+    dq_rule_generation:
+      name: ${var.job_name}
+
+      # Grant app service principal permission to run this job
+      permissions:
+        - service_principal_name: ${resources.apps.dqx_app.service_principal_client_id}
+          level: CAN_MANAGE_RUN
+
+      tasks:
+        - task_key: generate
+          notebook_task:
+            notebook_path: ${var.notebook_path}
+            source: WORKSPACE
+          environment_key: Default
+          timeout_seconds: 300  # 5 minutes max
+
+      queue:
+        enabled: true
+
+      parameters:
+        - name: table_name
+          default: "{{table_name}}"
+        - name: timestamp
+          default: "{{job.trigger.time.timestamp_ms}}"
+        - name: user_prompt
+          default: "{{user_prompt}}"
+
+      # Serverless environment configuration with DQX library
+      environments:
+        - environment_key: Default
+          spec:
+            dependencies:
+              - databricks-labs-dqx[llm]
+            environment_version: "4"
+
+      performance_target: PERFORMANCE_OPTIMIZED
+
+      # Job timeout
+      timeout_seconds: 300  # 5 minutes max for entire job
+
+      # Tags for cost tracking
+      tags:
+        project: "dqx-data-quality-manager"
+        component: "generator"
+        environment: "${bundle.target}"

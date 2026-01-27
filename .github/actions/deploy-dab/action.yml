@@ -1,0 +1,132 @@
+name: "Deploy Databricks Asset Bundle"
+description: "Validate and deploy the Databricks bundle for a target environment"
+inputs:
+  env:
+    description: "Environment key (databricks bundle target)"
+    required: true
+  profile:
+    description: "Databricks CLI profile to use"
+    required: true
+  lakebase-host:
+    description: "Lakebase PostgreSQL host"
+    required: false
+    default: ""
+  lakebase-database:
+    description: "Lakebase database name"
+    required: false
+    default: ""
+  model-serving-endpoint:
+    description: "Model serving endpoint for AI analysis"
+    required: false
+    default: ""
+  sql-warehouse-id:
+    description: "SQL Warehouse ID for app to execute queries"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Validate bundle
+      shell: bash
+      run: |
+        set -euxo pipefail
+        databricks bundle validate -t "${{ inputs.env }}" \
+          --var "sql_warehouse_id=${{ inputs.sql-warehouse-id }}"
+
+    - name: Deploy bundle (first pass - creates jobs and app)
+      shell: bash
+      run: |
+        set -euxo pipefail
+        databricks bundle deploy -t "${{ inputs.env }}" \
+          --var "sql_warehouse_id=${{ inputs.sql-warehouse-id }}"
+
+    - name: Configure app.yaml with job IDs and secrets
+      shell: bash
+      env:
+        LAKEBASE_HOST_VALUE: ${{ inputs.lakebase-host }}
+        LAKEBASE_DATABASE_VALUE: ${{ inputs.lakebase-database }}
+        MODEL_SERVING_ENDPOINT_VALUE: ${{ inputs.model-serving-endpoint }}
+        SQL_WAREHOUSE_ID_VALUE: ${{ inputs.sql-warehouse-id }}
+      run: |
+        set -euo pipefail
+
+        # Get job IDs from deployed bundle
+        echo "Getting job IDs from bundle summary..."
+        BUNDLE_SUMMARY=$(databricks bundle summary -t "${{ inputs.env }}" \
+          --var "sql_warehouse_id=$SQL_WAREHOUSE_ID_VALUE" --output json)
+
+        GENERATION_JOB_ID=$(echo "$BUNDLE_SUMMARY" | jq -r '.resources.jobs.dq_rule_generation.id // empty')
+        VALIDATION_JOB_ID=$(echo "$BUNDLE_SUMMARY" | jq -r '.resources.jobs.dq_rule_validation.id // empty')
+
+        echo "Generation Job ID: $GENERATION_JOB_ID"
+        echo "Validation Job ID: $VALIDATION_JOB_ID"
+
+        # Regenerate src/app.yaml with proper structure
+        printf '%s\n' \
+          'command:' \
+          '  - gunicorn' \
+          '  - --bind' \
+          '  - 0.0.0.0:8000' \
+          '  - --workers' \
+          '  - "2"' \
+          '  - --timeout' \
+          '  - "300"' \
+          '  - wsgi:app' \
+          '' \
+          'env:' > src/app.yaml
+
+        # Add job IDs
+        if [ -n "$GENERATION_JOB_ID" ]; then
+          echo "  - name: DQ_GENERATION_JOB_ID" >> src/app.yaml
+          echo "    value: \"$GENERATION_JOB_ID\"" >> src/app.yaml
+        fi
+
+        if [ -n "$VALIDATION_JOB_ID" ]; then
+          echo "  - name: DQ_VALIDATION_JOB_ID" >> src/app.yaml
+          echo "    value: \"$VALIDATION_JOB_ID\"" >> src/app.yaml
+        fi
+
+        # Add Lakebase config if provided
+        if [ -n "$LAKEBASE_HOST_VALUE" ]; then
+          echo "  - name: LAKEBASE_HOST" >> src/app.yaml
+          echo "    value: \"$LAKEBASE_HOST_VALUE\"" >> src/app.yaml
+        fi
+
+        if [ -n "$LAKEBASE_DATABASE_VALUE" ]; then
+          echo "  - name: LAKEBASE_DATABASE" >> src/app.yaml
+          echo "    value: \"$LAKEBASE_DATABASE_VALUE\"" >> src/app.yaml
+        fi
+
+        # Add Model Serving Endpoint
+        if [ -n "$MODEL_SERVING_ENDPOINT_VALUE" ]; then
+          echo "  - name: MODEL_SERVING_ENDPOINT" >> src/app.yaml
+          echo "    value: \"$MODEL_SERVING_ENDPOINT_VALUE\"" >> src/app.yaml
+        fi
+
+        # Add SQL Warehouse ID
+        if [ -n "$SQL_WAREHOUSE_ID_VALUE" ]; then
+          echo "  - name: SQL_WAREHOUSE_ID" >> src/app.yaml
+          echo "    value: \"$SQL_WAREHOUSE_ID_VALUE\"" >> src/app.yaml
+        fi
+
+        echo "src/app.yaml configured:"
+        cat src/app.yaml
+
+    - name: Deploy bundle (second pass - updates app with config)
+      shell: bash
+      env:
+        SQL_WAREHOUSE_ID_VALUE: ${{ inputs.sql-warehouse-id }}
+      run: |
+        set -euxo pipefail
+        databricks bundle deploy -t "${{ inputs.env }}" \
+          --var "sql_warehouse_id=$SQL_WAREHOUSE_ID_VALUE"
+
+    - name: Run app (deploy and start)
+      shell: bash
+      env:
+        SQL_WAREHOUSE_ID_VALUE: ${{ inputs.sql-warehouse-id }}
+      run: |
+        set -euxo pipefail
+        echo "Starting app deployment via bundle run..."
+        databricks bundle run dqx_app -t "${{ inputs.env }}" \
+          --var "sql_warehouse_id=$SQL_WAREHOUSE_ID_VALUE"
+        echo "App deployment initiated successfully"

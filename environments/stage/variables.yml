@@ -1,0 +1,19 @@
+# Stage Environment Variables
+# Variables are scoped to the stage target
+
+targets:
+  stage:
+    variables:
+      # Application Configuration
+      app_name: "dqx-rule-generator-stage"
+      app_description: "DQX Data Quality Manager - Stage Environment"
+
+      # Generation Job Configuration
+      job_name: "DQ Rule Generation - Stage"
+      # Use bundle's deployed path - notebooks are synced to workspace.root_path
+      notebook_path: "${workspace.root_path}/files/notebooks/generate_dq_rules_fast"
+
+      # Validation Job Configuration
+      validation_job_name: "DQ Rule Validation - Stage"
+      # Use bundle's deployed path - notebooks are synced to workspace.root_path
+      validation_notebook_path: "${workspace.root_path}/files/notebooks/validate_dq_rules"

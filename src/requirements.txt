@@ -1,0 +1,19 @@
+# Core Flask Framework
+# Note: dash (databricks-sdk dependency) requires Flask<3.1 and Werkzeug<3.1
+Flask==3.0.3
+Werkzeug==3.0.6
+
+# Production WSGI Server
+gunicorn==23.0.0
+
+# Environment Variables Management
+python-dotenv==1.2.1
+
+# Databricks SDK
+databricks-sdk==0.76.0
+
+# Databricks SQL Connector (for user authorization / OBO)
+databricks-sql-connector==4.2.3
+
+# Lakebase PostgreSQL Connection
+psycopg2-binary==2.9.11

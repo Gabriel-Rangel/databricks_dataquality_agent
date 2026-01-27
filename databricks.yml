@@ -1,0 +1,74 @@
+# Databricks Asset Bundle Configuration (AWS - Serverless)
+# =========================================================
+#
+# Deploy using: databricks bundle deploy -t <target>
+#
+# Available targets:
+#   - dev   : Development environment (default)
+#   - stage : Staging environment
+#   - prod  : Production environment
+#
+# Prerequisites:
+#   1. Set DATABRICKS_HOST environment variable (or use GitHub secrets in CI/CD)
+#   2. Configure authentication (GitHub OIDC or token)
+#   3. For CI/CD: Configure GitHub repository secrets
+#
+# Local deployment:
+#   export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
+#   databricks bundle deploy -t dev --var sql_warehouse_id=<your-warehouse-id>
+#
+# File Structure:
+#   databricks.yml                        # This file - main configuration
+#   resources/
+#   │   ├── apps.yml                      # App definitions
+#   │   ├── generation_job.yml            # DQ Rule Generation Job (Serverless)
+#   │   └── validation_job.yml            # DQ Rule Validation Job (Serverless)
+#   environments/
+#   │   ├── dev/
+#   │   │   ├── targets.yml               # Dev target config
+#   │   │   ├── variables.yml             # Dev variables
+#   │   │   └── permissions.yml           # Dev permissions
+#   │   ├── stage/
+#   │   │   ├── targets.yml               # Stage target config
+#   │   │   ├── variables.yml             # Stage variables
+#   │   │   └── permissions.yml           # Stage permissions
+#   │   └── prod/
+#   │       ├── targets.yml               # Prod target config
+#   │       ├── variables.yml             # Prod variables
+#   │       └── permissions.yml           # Prod permissions
+
+bundle:
+  name: dqx-rule-generator
+
+# Variable declarations (values set per-target in environments/<env>/variables.yml)
+# Note: App environment variables (LAKEBASE_*, MODEL_SERVING_ENDPOINT, etc.)
+#       are passed via GitHub secrets in CI/CD, not as DAB variables.
+variables:
+  app_name:
+    description: "Name of the Databricks App"
+  app_description:
+    description: "Description of the Databricks App"
+  job_name:
+    description: "Name of the DQ rule generation job"
+  notebook_path:
+    description: "Path to the DQ rule generation notebook"
+  validation_job_name:
+    description: "Name of the DQ rule validation job"
+  validation_notebook_path:
+    description: "Path to the DQ rule validation notebook"
+  sql_warehouse_id:
+    description: "SQL Warehouse ID for app to execute queries"
+    default: ""  # Overridden by CI/CD --var flag
+
+# Include modular configuration files
+include:
+  # Resources
+  - ./resources/*.yml
+
+  # Environment-specific configurations (targets, variables, permissions)
+  - ./environments/dev/*.yml
+  - ./environments/stage/*.yml
+  - ./environments/prod/*.yml
+
+# Note: App source code (src/) is deployed via source_code_path in resources/apps.yml
+# Notebooks are deployed via notebook tasks in job definitions

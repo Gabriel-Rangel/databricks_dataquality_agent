@@ -1,0 +1,50 @@
+# Databricks App Configuration
+# ============================
+# Runtime configuration for the Flask app
+#
+# SETUP INSTRUCTIONS:
+# 1. Set SQL_WAREHOUSE_ID to your SQL Warehouse ID
+#    Get it: databricks warehouses list --output json | jq '.[].id'
+#
+# 2. Deploy the bundle first: databricks bundle deploy -t dev
+#
+# 3. Get the job IDs created by the bundle:
+#    databricks jobs list --output json | jq '.[] | select(.settings.name | contains("DQ Rule")) | {name: .settings.name, id: .job_id}'
+#
+# 4. Update DQ_GENERATION_JOB_ID and DQ_VALIDATION_JOB_ID below
+#
+# 5. Redeploy: databricks bundle deploy -t dev
+#
+# 6. Redeploy: databricks bundle run -t dev
+
+command:
+  - gunicorn
+  - --bind
+  - 0.0.0.0:8000
+  - --workers
+  - "2"
+  - --timeout
+  - "300"
+  - wsgi:app
+
+env:
+  # === REQUIRED: Set your SQL Warehouse ID ===
+  - name: SQL_WAREHOUSE_ID
+    value: "148ccb90800933a1"
+
+  # === REQUIRED: Set after first deployment (see instructions above) ===
+  - name: DQ_GENERATION_JOB_ID
+    value: "33189798259299"
+
+  - name: DQ_VALIDATION_JOB_ID
+    value: "552888835514296"
+
+  # === LAKEBASE: PostgreSQL for storing DQ rules ===
+  - name: LAKEBASE_HOST
+    value: "instance-91ec4609-d6b6-4ee3-bfce-553b5ca033db.database.azuredatabricks.net"
+
+  - name: LAKEBASE_DATABASE
+    value: "databricks_postgres"
+
+  - name: LAKEBASE_PORT
+    value: "5432"

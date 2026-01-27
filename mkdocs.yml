@@ -1,0 +1,97 @@
+# MkDocs Configuration for DQX Rule Generator
+site_name: DQX Data Quality Manager
+site_description: AI-powered data quality rule generation and validation for Databricks
+site_url: https://dediggibyte.github.io/databricks_dqx_agent/
+repo_url: https://github.com/dediggibyte/databricks_dqx_agent
+repo_name: dediggibyte/databricks_dqx_agent
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - content.code.copy
+    - content.tabs.link
+    - navigation.expand
+    - navigation.footer
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: runbook.md
+    - Configuration: configuration.md
+    - Authentication: authentication.md
+  - Architecture:
+    - System Overview: architecture.md
+    - API Reference: api-reference.md
+  - Reference:
+    - DQX Checks: dqx-checks.md
+    - CI/CD Pipeline: ci-cd.md
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dediggibyte/databricks_dqx_agent
+    - icon: fontawesome/solid/globe
+      link: https://databrickslabs.github.io/dqx/
+  generator: false
+
+extra_css:
+  - stylesheets/extra.css
+
+copyright: Copyright &copy; 2026 Diggibyte Technologies

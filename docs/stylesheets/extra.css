@@ -1,0 +1,178 @@
+/* DQX Data Quality Manager - Custom Styles */
+
+:root {
+  --md-primary-fg-color: #FF3621;
+  --md-primary-fg-color--light: #FF6B4A;
+  --md-primary-fg-color--dark: #E02D1B;
+  --md-accent-fg-color: #FF6B4A;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #FF3621;
+  --md-primary-fg-color--light: #FF6B4A;
+  --md-primary-fg-color--dark: #E02D1B;
+  --md-accent-fg-color: #FF6B4A;
+}
+
+/* Grid cards for features */
+.grid.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.grid.cards > ul {
+  display: contents;
+}
+
+.grid.cards > ul > li,
+.grid.cards > * {
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  list-style: none;
+  margin: 0;
+}
+
+.grid.cards > ul > li:hover,
+.grid.cards > *:hover {
+  border-color: var(--md-primary-fg-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.grid.cards p {
+  margin: 0.5rem 0 0 0;
+}
+
+.grid.cards hr {
+  margin: 0.75rem 0;
+  border: none;
+  border-top: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* Code blocks */
+.md-typeset code {
+  font-size: 0.85em;
+}
+
+/* Table improvements */
+.md-typeset table:not([class]) {
+  font-size: 0.9rem;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--md-primary-fg-color);
+  color: white;
+  font-weight: 600;
+}
+
+/* Admonition customization */
+.md-typeset .admonition.info,
+.md-typeset details.info {
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .info > .admonition-title,
+.md-typeset .info > summary {
+  background-color: rgba(255, 54, 33, 0.1);
+}
+
+/* Button styling */
+.md-typeset .md-button {
+  font-weight: 600;
+}
+
+.md-typeset .md-button--primary {
+  background-color: var(--md-primary-fg-color);
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .md-button--primary:hover {
+  background-color: var(--md-primary-fg-color--dark);
+  border-color: var(--md-primary-fg-color--dark);
+}
+
+/* Architecture diagram styling */
+.md-typeset pre:has(code) {
+  background: var(--md-code-bg-color);
+}
+
+/* Architecture diagram figures */
+.md-typeset figure.arch-diagram {
+  margin: 2rem 0;
+  padding: 0;
+  text-align: center;
+}
+
+.md-typeset figure.arch-diagram img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  padding: 1rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.md-typeset figure.arch-diagram img:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+.md-typeset figure.arch-diagram figcaption {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--md-default-fg-color--light);
+  font-style: italic;
+}
+
+/* Hero diagram (larger, more prominent) */
+.md-typeset figure.arch-diagram--hero img {
+  padding: 1.5rem;
+  border-radius: 16px;
+}
+
+/* Dark mode adjustments for images */
+[data-md-color-scheme="slate"] .md-typeset figure.arch-diagram img {
+  background: #1e1e1e;
+  border-color: #404040;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-md-color-scheme="slate"] .md-typeset figure.arch-diagram img:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .md-typeset figure.arch-diagram img {
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+
+  .md-typeset figure.arch-diagram--hero img {
+    padding: 0.75rem;
+  }
+}
+
+/* Image container for README-style images */
+.md-typeset img[alt="DQX Architecture"],
+.md-typeset img[alt="System Overview"] {
+  display: block;
+  margin: 1.5rem auto;
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  padding: 1rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+[data-md-color-scheme="slate"] .md-typeset img[alt="DQX Architecture"],
+[data-md-color-scheme="slate"] .md-typeset img[alt="System Overview"] {
+  background: #1e1e1e;
+  border-color: #404040;
+}

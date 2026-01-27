@@ -1,0 +1,50 @@
+# App Resources
+# Databricks App Definition for DQ Data Quality Manager
+#
+# This app uses USER AUTHORIZATION - it acts on behalf of the logged-in user
+# using their permissions. No explicit catalog/schema grants needed.
+#
+# Deploy: databricks bundle deploy -t <target>
+# Run:    databricks bundle run dqx_app -t <target>
+#
+# NOTE: After first deployment, you must update src/app.yaml with the job IDs:
+#   databricks jobs list --output json | jq '.[] | select(.settings.name | contains("DQ Rule")) | {name: .settings.name, id: .job_id}'
+
+resources:
+  apps:
+    dqx_app:
+      name: ${var.app_name}
+      description: ${var.app_description}
+
+      # Source code location - the src/ folder contains all app files
+      source_code_path: ../src
+
+      # User API scopes - required for OBO (On-Behalf-Of) authentication
+      # These scopes are requested when the user logs into the app
+      # See: https://docs.databricks.com/aws/en/dev-tools/databricks-apps/auth
+      # Note: Only sql scope is used for OBO; job operations use app SP credentials
+      user_api_scopes:
+        - sql
+
+      # Resources the app can access
+      resources:
+        # SQL Warehouse for executing queries (user authorization)
+        - name: "dqx-sql-warehouse"
+          description: "SQL Warehouse for executing Unity Catalog queries"
+          sql_warehouse:
+            id: ${var.sql_warehouse_id}
+            permission: "CAN_USE"
+
+        # Grant app permission to run the DQ generation job
+        - name: "dqx-generation-job"
+          description: "Job for generating DQ rules using AI"
+          job:
+            id: ${resources.jobs.dq_rule_generation.id}
+            permission: "CAN_MANAGE_RUN"
+
+        # Grant app permission to run the DQ validation job
+        - name: "dqx-validation-job"
+          description: "Job for validating DQ rules against data"
+          job:
+            id: ${resources.jobs.dq_rule_validation.id}
+            permission: "CAN_MANAGE_RUN"
